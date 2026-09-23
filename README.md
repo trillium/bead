@@ -62,6 +62,28 @@ on Title; `tab` cycles Title → Priority → Labels → Description → Title,
   the picker (or quits for direct `bead <store>`). A failed create reopens
   the form with everything preserved and the error shown.
 
+## `bead pi` — bead-scoped pi session
+
+`bead pi ["thought..."]` launches pi from `~/data` with a system prompt
+carrying the live store list plus the creation workflow: paste messy
+content, scope it down, pi creates via `<store> create --body-file`, prints
+`CREATED: <ids>`. `echo body | bead pi ["title"]` folds stdin into the
+initial prompt; `bead -n pi [...]` dry-runs via `pi -p` (plans, no writes).
+`~/.local/bin/bead-pi` is a one-line shim to `bead pi`.
+
+- `--narrow`: stripped-down pi — `--no-skills --no-context-files
+  --tools bash,read`. The scope prompt embeds the FULL runbook itself
+  (federation model, store routing, `--body-file` pattern, priority 0–4,
+  `-t` type options, mandatory duplicate-check) because the global
+  AGENTS.md never loads. Full mode stays additive instead: AGENTS.md
+  already teaches the federation model, so the prompt only adds the live
+  store list. Narrow keeps `-n` dry-run and `~/data` cwd behavior.
+- `--theme <name>`: forwarded as pi `--use-theme`, default
+  `rose-pine-moon` so bead sessions look distinct from stock pi.
+  Available: pi built-ins `dark` / `light`, plus any
+  `~/.pi/agent/themes/*.json` by file name (e.g. `rose-pine-moon`).
+  A missing theme falls back to pi's dark default.
+
 ## Themes
 
 `BEAD_THEME` selects the palette (default `rose-pine`):

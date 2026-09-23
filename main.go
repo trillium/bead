@@ -177,6 +177,7 @@ Usage:
   bead <store> "Short title"      entry form with the title prefilled
   bead "Short title"              pick a store with the title prefilled
   bead pi ["thought..."]          bead-scoped pi session: paste, scope down, create, exit
+  bead pi --narrow|--theme <n> …  stripped-down session / tinted theme (bead pi --help)
   echo "body" | bead <store> "T"  non-interactive: title + piped body
   bead -n|--dry-run <store> …     preview; create nothing
   bead --list                     list known stores and exit
