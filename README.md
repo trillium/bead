@@ -19,6 +19,7 @@ bead <store>                    entry form for that store → create
 bead <store> "Short title"      entry form with the title prefilled
 bead "Short title"              pick a store with the title prefilled
 echo "body" | bead <store> "T"  non-interactive: title + piped body
+bead pi ["thought..."]          bead-scoped pi session: paste, scope down, create, exit
 bead -n|--dry-run <store> …     preview; create nothing
 bead --list                     list known stores and exit
 bead -h|--help                  help

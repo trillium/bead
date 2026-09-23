@@ -52,6 +52,11 @@ func run(argv []string) int {
 		}
 	}
 
+	// bead pi: jump into a bead-scoped pi session (before store routing).
+	if len(positionals) > 0 && positionals[0] == "pi" {
+		return runBeadPi(positionals[1:], dryRun)
+	}
+
 	storeName := ""
 	prefillTitle := ""
 	if len(positionals) > 0 {
@@ -171,6 +176,7 @@ Usage:
   bead <store>                    entry form for that store → create
   bead <store> "Short title"      entry form with the title prefilled
   bead "Short title"              pick a store with the title prefilled
+  bead pi ["thought..."]          bead-scoped pi session: paste, scope down, create, exit
   echo "body" | bead <store> "T"  non-interactive: title + piped body
   bead -n|--dry-run <store> …     preview; create nothing
   bead --list                     list known stores and exit
