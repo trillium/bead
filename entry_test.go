@@ -42,7 +42,7 @@ func TestEntryDefaults(t *testing.T) {
 }
 
 func TestEntryNavHints(t *testing.T) {
-	// Focus title: next=priority gets TAB, prev=desc gets SHIFT+TAB.
+	// Focus title: next=priority gets TAB, prev=save gets SHIFT+TAB.
 	v := testEntry().View()
 	for _, want := range []string{"-- TAB --", "-- SHIFT+TAB --"} {
 		if !strings.Contains(v, want) {
@@ -50,21 +50,21 @@ func TestEntryNavHints(t *testing.T) {
 		}
 	}
 	lines := strings.Split(v, "\n")
-	var prioLine, descLine string
+	var prioLine, saveLine string
 	for _, l := range lines {
 		// Headers carry ❯ or a -- hint; skips textarea placeholder text.
 		if strings.Contains(l, "Priority") && (strings.Contains(l, "❯") || strings.Contains(l, "-- ")) {
 			prioLine = l
 		}
-		if strings.Contains(l, "Description") && (strings.Contains(l, "❯") || strings.Contains(l, "-- ")) {
-			descLine = l
+		if strings.Contains(l, "Save") && strings.Contains(l, "-- ") {
+			saveLine = l
 		}
 	}
 	if !strings.Contains(prioLine, "-- TAB --") || strings.Contains(prioLine, "SHIFT+TAB") {
 		t.Errorf("priority line should carry TAB hint only: %q", prioLine)
 	}
-	if !strings.Contains(descLine, "-- SHIFT+TAB --") || strings.Contains(descLine, "-- TAB --") {
-		t.Errorf("desc line should carry SHIFT+TAB hint only: %q", descLine)
+	if !strings.Contains(saveLine, "-- SHIFT+TAB --") || strings.Contains(saveLine, "-- TAB --") {
+		t.Errorf("save line should carry SHIFT+TAB hint only: %q", saveLine)
 	}
 	// After tab to priority, hints rotate: labels gets TAB, title gets SHIFT+TAB.
 	v = update(testEntry(), "tab").View()
@@ -80,12 +80,60 @@ func TestEntryTabCycles(t *testing.T) {
 		t.Errorf("3x tab focus = %d, want desc", m.focus)
 	}
 	m = update(m, "tab")
+	if m.focus != entrySave {
+		t.Errorf("4x tab focus = %d, want save", m.focus)
+	}
+	m = update(m, "tab")
 	if m.focus != entryTitle {
-		t.Errorf("4x tab focus = %d, want wrap to title", m.focus)
+		t.Errorf("5x tab focus = %d, want wrap to title", m.focus)
+	}
+	m = update(m, "shift+tab")
+	if m.focus != entrySave {
+		t.Errorf("shift+tab focus = %d, want save", m.focus)
 	}
 	m = update(m, "shift+tab")
 	if m.focus != entryDesc {
-		t.Errorf("shift+tab focus = %d, want desc", m.focus)
+		t.Errorf("shift+tab from save focus = %d, want desc", m.focus)
+	}
+}
+
+func TestEntrySaveEnter(t *testing.T) {
+	// Enter on Save with a title creates.
+	m := typeText(testEntry(), "my title")
+	m = update(m, "shift+tab", "enter") // title -> save
+	if m.result != entrySubmit {
+		t.Errorf("enter on save: result = %d, want submit", m.result)
+	}
+	// Same validation as ctrl+s: empty title blocks and refocuses title.
+	m = update(testEntry(), "shift+tab", "enter")
+	if m.result != entryNone || m.errMsg == "" || m.focus != entryTitle {
+		t.Errorf("empty title: result=%d err=%q focus=%d, want blocked at title", m.result, m.errMsg, m.focus)
+	}
+	// ctrl+s still works from Save.
+	m = typeText(testEntry(), "t")
+	m = update(m, "shift+tab", "ctrl+s")
+	if m.result != entrySubmit {
+		t.Errorf("ctrl+s on save: result = %d, want submit", m.result)
+	}
+	// Focused Save is visibly marked.
+	if v := update(testEntry(), "shift+tab").View(); !strings.Contains(v, "❯") || !strings.Contains(v, "Save") {
+		t.Errorf("view missing focused save")
+	}
+}
+
+func TestEntryEnterElsewhereUnchanged(t *testing.T) {
+	for _, f := range []int{entryTitle, entryPriority, entryDesc} {
+		m := typeText(testEntry(), "x")
+		m.setFocus(f)
+		m = update(m, "enter")
+		if m.result != entryNone {
+			t.Errorf("enter on field %d submitted", f)
+		}
+	}
+	// Labels: enter still adds a match.
+	m := update(testEntry(), "tab", "tab", "enter")
+	if len(m.selected) != 1 {
+		t.Errorf("enter in labels selected = %v, want one", m.selected)
 	}
 }
 
@@ -96,8 +144,8 @@ func TestEntryUpDownMoves(t *testing.T) {
 		t.Errorf("down focus = %d, want priority", m.focus)
 	}
 	m = update(m, "up", "up")
-	if m.focus != entryDesc {
-		t.Errorf("up x2 focus = %d, want wrap to desc", m.focus)
+	if m.focus != entrySave {
+		t.Errorf("up x2 focus = %d, want wrap to save", m.focus)
 	}
 }
 
@@ -205,8 +253,8 @@ func TestEntryCreateArgs(t *testing.T) {
 	m = typeText(m, "frontend")
 	m = update(m, "enter")
 	m = update(m, "tab", "tab", "shift+tab", "shift+tab") // wander and back to labels
-	// cycle back to title: focus is labels(2) -> tab desc(3) -> tab title(0)
-	m = update(m, "tab", "tab")
+	// cycle back to title: labels(2) -> desc(3) -> save(4) -> title(0)
+	m = update(m, "tab", "tab", "tab")
 	m = typeText(m, "Fix it")
 	// leave typed remainder in labels input
 	m = update(m, "tab", "tab") // priority, labels

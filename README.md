@@ -45,10 +45,10 @@ When stdout isn't a terminal the picker falls back to a plain name prompt
 ## Entry form
 
 `bead <store>` — or picking a store — lands in the entry form. Focus starts
-on Title; `tab` cycles Title → Priority → Labels → Description → Title,
+on Title; `tab` cycles Title → Priority → Labels → Description → Save → Title,
 `↑↓` move between fields the same way.
 
-- **Title**: one line. Required (`ctrl+s` with it empty stays put).
+- **Title**: one line. Required (creating with it empty stays put).
 - **Priority**: `←/→` steps 0–4 (clamped), or just type the digit.
 - **Labels**: fuzzy search over the store's existing labels
   (fetched in background via `<store> label list-all` — the form opens
@@ -58,7 +58,8 @@ on Title; `tab` cycles Title → Priority → Labels → Description → Title,
   any leftover typed text is included on submit (comma-separated).
 - **Description**: multiline area, `⏎` for newlines. (`↑↓` still move
   fields, even here — by design.)
-- `ctrl+s` creates (`-t task -p N -l … --body-file …`), `esc` backs out to
+- **Save**: a button after Description; `⏎` on it creates, same as `ctrl+s`.
+- `ctrl+s` creates from any field (`-t task -p N -l … --body-file …`), `esc` backs out to
   the picker (or quits for direct `bead <store>`). A failed create reopens
   the form with everything preserved and the error shown.
 
