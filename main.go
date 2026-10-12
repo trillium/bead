@@ -144,20 +144,7 @@ func run(argv []string) int {
 			return 1
 		}
 		args := []string{"create", prefillTitle}
-		var bodyFile string
-		if len(bytesTrimSpace(body)) > 0 {
-			bodyFile, err = writeTemp("bead-body.*", body)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "bead: %v\n", err)
-				return 1
-			}
-			defer os.Remove(bodyFile)
-			args = append(args, "--body-file", bodyFile)
-		}
-		if dryRun {
-			args = append(args, "--dry-run")
-		}
-		return execStore(storeName, args)
+		return execCreate(storeName, args, string(body), dryRun)
 	}
 
 	// Interactive (stdin is a tty here): full TUI entry when stdout is also
@@ -191,7 +178,8 @@ Entry form keys:
 Flags (any position):
   -n, --dry-run   forward --dry-run to the store's create (previews, no write).
 
-Long content goes through --body-file (the description), never over the
+Long content goes through --body-file - (the description on stdin, which
+also reaches a brain host through remote store wrappers), never over the
 command line, so quoting/length limits can't mangle it.`)
 }
 

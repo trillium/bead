@@ -2,20 +2,89 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
-// loadStores parses the small known shape of stores.yaml without a yaml
+// loadStores returns the authoritative store list. On a brain remote client
+// (~/.config/brain/remote.yaml exists) the local stores.yaml is a stale copy,
+// so ask the host through `brain stores list --json`; on the host, or if the
+// remote cannot be reached, read the local registry.
+func loadStores() ([]store, error) {
+	return chooseStores(isRemoteClient(), fetchRemoteStores, loadLocalStores)
+}
+
+// chooseStores picks the remote list on a remote client when it yields stores,
+// else the local registry.
+func chooseStores(remote bool, fetch, local func() ([]store, error)) ([]store, error) {
+	if remote {
+		if stores, err := fetch(); err == nil && len(stores) > 0 {
+			return stores, nil
+		}
+	}
+	return local()
+}
+
+func isRemoteClient() bool {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(filepath.Join(home, ".config", "brain", "remote.yaml"))
+	return err == nil
+}
+
+// fetchRemoteStores asks the brain host for its registry; brain forwards the
+// command over ssh when this machine is a remote client.
+func fetchRemoteStores() ([]store, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "brain", "stores", "list", "--json").Output()
+	if err != nil {
+		return nil, err
+	}
+	return parseStoresJSON(out)
+}
+
+// parseStoresJSON decodes `brain stores list --json`. The host may print
+// notices before the JSON array.
+func parseStoresJSON(data []byte) ([]store, error) {
+	start := bytes.IndexByte(data, '[')
+	if start < 0 {
+		return nil, fmt.Errorf("no JSON array in stores list output")
+	}
+	var rows []struct {
+		Name  string `json:"name"`
+		Path  string `json:"path"`
+		About string `json:"about"`
+	}
+	if err := json.NewDecoder(bytes.NewReader(data[start:])).Decode(&rows); err != nil {
+		return nil, fmt.Errorf("parsing stores list: %w", err)
+	}
+	var out []store
+	for _, r := range rows {
+		if r.Name != "" {
+			out = append(out, store{Name: r.Name, Path: r.Path, About: r.About})
+		}
+	}
+	return out, nil
+}
+
+// loadLocalStores parses the small known shape of stores.yaml without a yaml
 // dependency:
 //
 //	stores:
 //	    <name>:
 //	        path: ...
 //	        about: ...
-func loadStores() ([]store, error) {
+func loadLocalStores() ([]store, error) {
 	path := registryPath()
 	data, err := os.ReadFile(path)
 	if err != nil {

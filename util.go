@@ -46,9 +46,9 @@ func isTTY(f *os.File) bool {
 	return errno == 0
 }
 
-func execStore(storeName string, args []string) int {
+func execStore(storeName string, args []string, stdin io.Reader) int {
 	cmd := exec.Command(storeName, args...)
-	cmd.Stdin = os.Stdin
+	cmd.Stdin = stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -67,22 +67,4 @@ func bytesTrimSpace(b []byte) []byte {
 
 func readAll(f *os.File) ([]byte, error) {
 	return io.ReadAll(f)
-}
-
-func writeTemp(pattern string, data []byte) (string, error) {
-	f, err := os.CreateTemp("", pattern)
-	if err != nil {
-		return "", err
-	}
-	name := f.Name()
-	if _, err := f.Write(data); err != nil {
-		f.Close()
-		os.Remove(name)
-		return "", err
-	}
-	if err := f.Close(); err != nil {
-		os.Remove(name)
-		return "", err
-	}
-	return name, nil
 }

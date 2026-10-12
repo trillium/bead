@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -61,22 +62,38 @@ func runInteractive(storeName, prefillTitle string, dryRun bool, stores []store)
 	}
 }
 
-// runCreate executes `<store> create …` with the body via --body-file.
-// Returns the store's exit code.
-func runCreate(storeName string, args []string, body string, dryRun bool) int {
+// createInvocation builds the argv for `<store> create` and the stdin to
+// feed it. A description goes in on stdin via `--body-file -`, never as a
+// local temp-file path: on a brain remote client the create runs on the
+// host, which cannot see this machine's files, but the forwarder relays stdin.
+// hasStdin is false when there is no body (stdin is then left untouched).
+func createInvocation(args []string, body string, dryRun bool) (argv []string, stdin string, hasStdin bool) {
+	argv = append([]string{}, args...)
 	if strings.TrimSpace(body) != "" {
-		bodyFile, err := writeTemp("bead-body.*", []byte(strings.TrimRight(body, "\n")+"\n"))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "bead: %v\n", err)
-			return 1
-		}
-		defer os.Remove(bodyFile)
-		args = append(args, "--body-file", bodyFile)
+		argv = append(argv, "--body-file", "-")
+		stdin = strings.TrimRight(body, "\n") + "\n"
+		hasStdin = true
 	}
 	if dryRun {
-		args = append(args, "--dry-run")
+		argv = append(argv, "--dry-run")
 	}
-	rc := execStore(storeName, args)
+	return argv, stdin, hasStdin
+}
+
+// execCreate runs `<store> create …` with the body on stdin and returns the
+// store's exit code.
+func execCreate(storeName string, args []string, body string, dryRun bool) int {
+	argv, stdin, hasStdin := createInvocation(args, body, dryRun)
+	var in io.Reader = os.Stdin
+	if hasStdin {
+		in = strings.NewReader(stdin)
+	}
+	return execStore(storeName, argv, in)
+}
+
+// runCreate is execCreate plus the dry-run notice.
+func runCreate(storeName string, args []string, body string, dryRun bool) int {
+	rc := execCreate(storeName, args, body, dryRun)
 	if dryRun {
 		fmt.Fprintf(os.Stderr, "bead: dry run — nothing created.\n")
 	}
