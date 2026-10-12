@@ -183,8 +183,9 @@ Usage:
   bead --list                     list known stores and exit
 
 Entry form keys:
-  tab/↑↓   move between Title, Priority, Labels, Description
+  tab/↑↓   move between Title, Priority, Labels, Description, Save
   ←/→      Priority down/up (or type 0-4)      ⏎ in Labels adds the match
+             ⏎ on Save creates the bead
   ctrl+s    create the bead                     esc backs out / quits
 
 Flags (any position):

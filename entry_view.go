@@ -81,8 +81,15 @@ func (m entryModel) View() string {
 	fmt.Fprintf(&b, "  %s %s%s\n", marker(entryDesc), th.Title.Render("Description"), navHint(entryDesc))
 	fmt.Fprintf(&b, "    %s\n\n", strings.ReplaceAll(m.desc.View(), "\n", "\n    "))
 
+	// Save button.
+	btn := th.Dim.Render("[ Save ]")
+	if m.focus == entrySave {
+		btn = th.Reverse.Render(" Save ")
+	}
+	fmt.Fprintf(&b, "  %s %s%s\n\n", marker(entrySave), btn, navHint(entrySave))
+
 	fmt.Fprintf(&b, "  %s\n", th.Dim.Render(
-		"tab/↑↓ fields · ←/→ priority · ⏎ add label · ctrl+s create · esc back"))
+		"tab/↑↓ fields · ←/→ priority · ⏎ add label / save · ctrl+s create · esc back"))
 	return b.String()
 }
 

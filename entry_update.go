@@ -6,6 +6,19 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// submit validates and ends the form with entrySubmit; shared by ctrl+s
+// and Enter on the Save item.
+func (m entryModel) submit() (tea.Model, tea.Cmd) {
+	if strings.TrimSpace(m.title.Value()) == "" {
+		m.errMsg = "title is required"
+		m.setFocus(entryTitle)
+		return m, nil
+	}
+	m.errMsg = ""
+	m.result = entrySubmit
+	return m, tea.Quit
+}
+
 func (m entryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if labels, ok := msg.(labelsMsg); ok {
 		m.allLabels = []string(labels)
@@ -28,14 +41,7 @@ func (m entryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.result = entryBack
 			return m, tea.Quit
 		case "ctrl+s":
-			if strings.TrimSpace(m.title.Value()) == "" {
-				m.errMsg = "title is required"
-				m.setFocus(entryTitle)
-				return m, nil
-			}
-			m.errMsg = ""
-			m.result = entrySubmit
-			return m, tea.Quit
+			return m.submit()
 		case "tab":
 			m.errMsg = ""
 			m.setFocus(m.focus + 1)
@@ -77,6 +83,9 @@ func (m entryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "enter":
+			if m.focus == entrySave {
+				return m.submit()
+			}
 			if m.focus == entryLabels {
 				if len(m.suggest) > 0 {
 					m.acceptLabel(m.suggest[m.sugIdx])
@@ -113,7 +122,7 @@ func (m entryModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.refilterLabels()
 	case entryDesc:
 		m.desc, cmd = m.desc.Update(msg)
-	case entryPriority:
+	case entryPriority, entrySave:
 		// Nothing editable; swallow the key.
 	}
 	return m, cmd

@@ -15,6 +15,7 @@ const (
 	entryPriority
 	entryLabels
 	entryDesc
+	entrySave
 	entryFieldCount
 )
 
