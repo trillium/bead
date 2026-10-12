@@ -48,7 +48,7 @@ When stdout isn't a terminal the picker falls back to a plain name prompt
 on Title; `tab` cycles Title → Priority → Labels → Description → Save → Title,
 `↑↓` move between fields the same way.
 
-- **Title**: one line. Required (`ctrl+s` with it empty stays put).
+- **Title**: one line. Required (creating with it empty stays put).
 - **Priority**: `←/→` steps 0–4 (clamped), or just type the digit.
 - **Labels**: fuzzy search over the store's existing labels
   (fetched in background via `<store> label list-all` — the form opens
