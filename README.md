@@ -67,14 +67,15 @@ on Title; `tab` cycles Title → Priority → Labels → Description → Save �
 
 `bead pi ["thought..."]` launches pi from `~/data` with a system prompt
 carrying the live store list plus the creation workflow: paste messy
-content, scope it down, pi creates via `<store> create --body-file`, prints
+content, scope it down, pi creates via `<store> create --body-file -`
+(body heredoc on stdin, so remote store wrappers work too), prints
 `CREATED: <ids>`. `echo body | bead pi ["title"]` folds stdin into the
 initial prompt; `bead -n pi [...]` dry-runs via `pi -p` (plans, no writes).
 `~/.local/bin/bead-pi` is a one-line shim to `bead pi`.
 
 - `--narrow`: stripped-down pi — `--no-skills --no-context-files
   --tools bash,read`. The scope prompt embeds the FULL runbook itself
-  (federation model, store routing, `--body-file` pattern, priority 0–4,
+  (federation model, store routing, stdin `--body-file -` pattern, priority 0–4,
   `-t` type options, mandatory duplicate-check) because the global
   AGENTS.md never loads. Full mode stays additive instead: AGENTS.md
   already teaches the federation model, so the prompt only adds the live
