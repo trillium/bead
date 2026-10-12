@@ -8,8 +8,9 @@ bash wizard (`~/.local/bin/bead.bash-20260908`).
 `<store> create "…"` puts everything in the TITLE and on the shell command
 line, so long / multiline / quote-heavy content breaks on shell quoting,
 length guards, or approval hooks. This wizard takes the entry in-app and
-sends the long content through `--body-file -` (the description on stdin, so it also works through brain remote wrappers), never over
-the command line.
+sends the long content through `--body-file -` (the description on stdin,
+so it also works through brain remote wrappers), never over the command
+line.
 
 ## Usage
 
@@ -30,7 +31,8 @@ Flags (`-n`, `--dry-run`) accepted in any position.
 ## Picker
 
 Bare `bead` opens a fullscreen picker over all 38 stores from
-`~/.config/pai/stores.yaml` (on a brain remote client: the host's `brain stores list --json`; bubbletea, alt-screen):
+`~/.config/pai/stores.yaml` (on a brain remote client: the host's
+`brain stores list --json`; bubbletea, alt-screen):
 
 - Type any letters to filter (name + description); first match highlights.
 - `↑↓` / `PgUp/PgDn` move; the 12-row viewport scrolls (`▲/▼ N more`).
@@ -59,9 +61,10 @@ on Title; `tab` cycles Title → Priority → Labels → Description → Save �
 - **Description**: multiline area, `⏎` for newlines. (`↑↓` still move
   fields, even here — by design.)
 - **Save**: a button after Description; `⏎` on it creates, same as `ctrl+s`.
-- `ctrl+s` creates from any field (`-t task -p N -l … --body-file -`), `esc` backs out to
-  the picker (or quits for direct `bead <store>`). A failed create reopens
-  the form with everything preserved and the error shown.
+- `ctrl+s` creates from any field (`-t task -p N -l … --body-file -`),
+  `esc` backs out to the picker (or quits for direct `bead <store>`). A
+  failed create reopens the form with everything preserved and the error
+  shown.
 
 ## `bead pi` — bead-scoped pi session
 
@@ -75,9 +78,9 @@ initial prompt; `bead -n pi [...]` dry-runs via `pi -p` (plans, no writes).
 
 - `--narrow`: stripped-down pi — `--no-skills --no-context-files
   --tools bash,read`. The scope prompt embeds the FULL runbook itself
-  (federation model, store routing, stdin `--body-file -` pattern, priority 0–4,
-  `-t` type options, mandatory duplicate-check) because the global
-  AGENTS.md never loads. Full mode stays additive instead: AGENTS.md
+  (federation model, store routing, stdin `--body-file -` pattern,
+  priority 0–4, `-t` type options, mandatory duplicate-check) because the
+  global AGENTS.md never loads. Full mode stays additive instead: AGENTS.md
   already teaches the federation model, so the prompt only adds the live
   store list. Narrow keeps `-n` dry-run and `~/data` cwd behavior.
 - `--theme <name>`: forwarded as pi `--use-theme`, default
