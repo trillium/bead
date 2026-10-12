@@ -215,9 +215,11 @@ WORKFLOW:
 1. The user pastes messy content. Scope it down with them: what is it, which store(s), one bead or several?
 2. Propose the plan (store + one-line title + 1-2 line body sketch + priority + type per bead) and confirm briefly before creating.
 3. DUPLICATE CHECK (mandatory before each create): run <store> search "<2-4 keywords>" on the target store (or <store> find-duplicates); if an open bead already covers it, report the existing id instead of creating a duplicate.
-4. Write the full markdown body to a temp file first, e.g.: cat > /tmp/bead-pi-body-1.md <<'EOF' ... EOF
-5. Create each bead with: <store> create "Title" -t <type> -p <priority> --body-file /tmp/bead-pi-body-N.md --silent
-   (--silent prints only the new id.) Then rm the temp file. Long content ALWAYS goes through --body-file, never on the command line.
+4. Hand the full markdown body over on stdin (no temp files: the store may run on a remote brain host that cannot see local paths):
+   <store> create "Title" -t <type> -p <priority> --body-file - --silent <<'EOF'
+   ...body...
+   EOF
+5. (--silent prints only the new id.) Long content ALWAYS goes through --body-file - on stdin, never on the command line.
 6. Priority scale: 0-4 or P0-P4, 0 = highest urgency, default 2 (normal). P0 = drop everything, P1 = soon, P2 = normal backlog, P3/P4 = someday.
 7. Type options (-t): bug | feature | task | epic | chore | decision (default task). Pick the one that fits; don't leave everything as task out of laziness.
 8. Labels: list candidates with <store> label list-all when useful; skip when unsure.
@@ -232,8 +234,11 @@ WORKFLOW:
 1. The user pastes messy content. Scope it down with them: what is it, which store(s), one bead or several?
 2. Defaults: inbox = unprocessed capture queue; task = actionable work; brain = knowledge/notes; ideas = not-yet-committed possibilities. Ask when ambiguous, but don't stall on trivia.
 3. Propose the plan (store + one-line title + 1-2 line body sketch per bead) and confirm briefly before creating.
-4. Create each bead with: <store> create "Title" -t task -p 2 --body-file /tmp/bead-pi-body-N.md --silent
-   Write the full body to the temp file first (heredoc), then create, then rm the temp file. Long content ALWAYS goes through --body-file, never on the command line.
+4. Create each bead with the body on stdin (no temp files: the store may run on a remote brain host that cannot see local paths):
+   <store> create "Title" -t task -p 2 --body-file - --silent <<'EOF'
+   ...body...
+   EOF
+   Long content ALWAYS goes through --body-file - on stdin, never on the command line.
 5. Labels: list candidates with <store> label list-all when useful; skip when unsure.
 6. End by printing: CREATED: <id1> <id2> ...`
 }
@@ -252,6 +257,6 @@ Usage:
 Themes: dark, light (pi built-ins) plus any ~/.pi/agent/themes/*.json by file
 name (e.g. rose-pine-moon). A missing theme falls back to dark.
 
-In the session pi knows every store, writes long bodies via --body-file,
+In the session pi knows every store, pipes long bodies via --body-file -,
 and prints CREATED: <ids> at the end. Quit pi (/exit, ctrl-c) to close down.`)
 }

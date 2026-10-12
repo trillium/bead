@@ -69,24 +69,7 @@ func runEditorForm(storeName, prefillTitle string, dryRun bool) int {
 	if labels != "" {
 		args = append(args, "-l", labels)
 	}
-	var bodyFile string
-	if body != "" {
-		bodyFile, err = writeTemp("bead-body.*", []byte(body+"\n"))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "bead: %v\n", err)
-			return 1
-		}
-		defer os.Remove(bodyFile)
-		args = append(args, "--body-file", bodyFile)
-	}
-	if dryRun {
-		args = append(args, "--dry-run")
-	}
-
-	rc := execStore(storeName, args)
-	if bodyFile != "" {
-		os.Remove(bodyFile)
-	}
+	rc := execCreate(storeName, args, body, dryRun)
 	if dryRun {
 		fmt.Fprintf(os.Stderr, "bead: dry run — nothing created; draft kept at %s\n", formPath)
 		return rc

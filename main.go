@@ -67,15 +67,23 @@ func run(argv []string) int {
 	}
 	// Ignore extras beyond title, like the bash original.
 
-	stores, err := loadStores()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "bead: %v\n", err)
-		return 1
-	}
+	// A store whose wrapper is on PATH needs no registry; skip the fetch
+	// (a host round trip on remote clients).
+	_, lookErr := exec.LookPath(storeName)
+	onPath := storeName != "" && lookErr == nil
+	var stores []store
 	byName := map[string]store{}
-	for _, s := range stores {
-		byName[s.Name] = s
-		byName[strings.ToLower(s.Name)] = s
+	if !onPath {
+		var err error
+		stores, err = loadStores()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "bead: %v\n", err)
+			return 1
+		}
+		for _, s := range stores {
+			byName[s.Name] = s
+			byName[strings.ToLower(s.Name)] = s
+		}
 	}
 
 	fullTUI := isTTY(os.Stdin) && isTTY(os.Stdout)
@@ -83,7 +91,7 @@ func run(argv []string) int {
 	if storeName == "" {
 		// Bare `bead` → picker. `bead -n` → picker in dry-run mode.
 		if !isTTY(os.Stdin) {
-			printUsage()
+			printUsage(stores)
 			fmt.Fprintf(os.Stderr, "\nbead: a store is required for piped input: bead <store> \"Title\" < body\n")
 			return 2
 		}
@@ -97,29 +105,27 @@ func run(argv []string) int {
 			storeName = picked.Name
 		}
 		// Else: runInteractive picks.
-	} else if _, known := byName[storeName]; !known {
-		if _, lookErr := exec.LookPath(storeName); lookErr != nil {
-			// Friendly path: `bead "Some title"` (store omitted) drops into
-			// the picker with the title prefilled instead of dying on
-			// "no such store command".
-			if isTTY(os.Stdin) && prefillTitle == "" && !looksLikeFlag(storeName) {
-				if fullTUI {
-					prefillTitle = storeName
-					storeName = ""
-				} else {
-					picked, ok := pickStore(stores)
-					if !ok {
-						fmt.Fprintf(os.Stderr, "bead: aborted (no store selected).\n")
-						return 1
-					}
-					prefillTitle = storeName
-					storeName = picked.Name
-				}
+	} else if _, known := byName[storeName]; !known && !onPath {
+		// Friendly path: `bead "Some title"` (store omitted) drops into
+		// the picker with the title prefilled instead of dying on
+		// "no such store command".
+		if isTTY(os.Stdin) && prefillTitle == "" && !looksLikeFlag(storeName) {
+			if fullTUI {
+				prefillTitle = storeName
+				storeName = ""
 			} else {
-				fmt.Fprintf(os.Stderr, "bead: no such store command: %s (is its wrapper on PATH?)\n", storeName)
-				fmt.Fprintf(os.Stderr, "bead: run `bead` with no args to pick from all stores.\n")
-				return 2
+				picked, ok := pickStore(stores)
+				if !ok {
+					fmt.Fprintf(os.Stderr, "bead: aborted (no store selected).\n")
+					return 1
+				}
+				prefillTitle = storeName
+				storeName = picked.Name
 			}
+		} else {
+			fmt.Fprintf(os.Stderr, "bead: no such store command: %s (is its wrapper on PATH?)\n", storeName)
+			fmt.Fprintf(os.Stderr, "bead: run `bead` with no args to pick from all stores.\n")
+			return 2
 		}
 	}
 
@@ -144,20 +150,7 @@ func run(argv []string) int {
 			return 1
 		}
 		args := []string{"create", prefillTitle}
-		var bodyFile string
-		if len(bytesTrimSpace(body)) > 0 {
-			bodyFile, err = writeTemp("bead-body.*", body)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "bead: %v\n", err)
-				return 1
-			}
-			defer os.Remove(bodyFile)
-			args = append(args, "--body-file", bodyFile)
-		}
-		if dryRun {
-			args = append(args, "--dry-run")
-		}
-		return execStore(storeName, args)
+		return execCreate(storeName, args, string(body), dryRun)
 	}
 
 	// Interactive (stdin is a tty here): full TUI entry when stdout is also
@@ -191,17 +184,16 @@ Entry form keys:
 Flags (any position):
   -n, --dry-run   forward --dry-run to the store's create (previews, no write).
 
-Long content goes through --body-file (the description), never over the
+Long content goes through --body-file - (the description on stdin, which
+also reaches a brain host through remote store wrappers), never over the
 command line, so quoting/length limits can't mangle it.`)
 }
 
-func printUsage() {
+func printUsage(stores []store) {
 	fmt.Fprintf(os.Stderr, "usage: bead [store] [\"title\"]\n")
-	if stores, err := loadStores(); err == nil {
-		fmt.Fprintf(os.Stderr, "stores:\n")
-		for _, s := range stores {
-			fmt.Fprintf(os.Stderr, "  %s\n", s.Name)
-		}
+	fmt.Fprintf(os.Stderr, "stores:\n")
+	for _, s := range stores {
+		fmt.Fprintf(os.Stderr, "  %s\n", s.Name)
 	}
 	fmt.Fprintf(os.Stderr, "run `bead --help` for details, or `bead` with no args to pick interactively.\n")
 }

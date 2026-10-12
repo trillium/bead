@@ -106,7 +106,7 @@ func TestBeadPiScopeNarrowIsSelfSufficient(t *testing.T) {
 	stores := []store{{Name: "inbox", About: "capture"}}
 	scope := beadPiScope(stores, true)
 	for _, want := range []string{
-		"--body-file", "0-4", "bug | feature | task | epic | chore | decision",
+		"--body-file - --silent <<'EOF'", "0-4", "bug | feature | task | epic | chore | decision",
 		"DUPLICATE CHECK", "thin", "CREATED:",
 	} {
 		if !strings.Contains(scope, want) {
@@ -120,5 +120,17 @@ func TestBeadPiScopeFullListsStores(t *testing.T) {
 	scope := beadPiScope(stores, false)
 	if !strings.Contains(scope, "inbox") {
 		t.Errorf("full scope missing store list: %q", scope)
+	}
+}
+
+func TestBeadPiScopeBodyOnStdin(t *testing.T) {
+	for _, narrow := range []bool{true, false} {
+		scope := beadPiScope(nil, narrow)
+		if !strings.Contains(scope, "--body-file - ") {
+			t.Errorf("narrow=%v scope must pass the body on stdin", narrow)
+		}
+		if strings.Contains(scope, "/tmp/") {
+			t.Errorf("narrow=%v scope still uses a local temp body file", narrow)
+		}
 	}
 }
