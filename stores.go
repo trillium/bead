@@ -130,7 +130,7 @@ func registryPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".config", "pai", "stores.yaml")
+	return filepath.Join(home, ".config", "trillium-stores", "stores.yaml")
 }
 
 func unquote(s string) string {
