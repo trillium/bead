@@ -31,7 +31,7 @@ Flags (`-n`, `--dry-run`) accepted in any position.
 ## Picker
 
 Bare `bead` opens a fullscreen picker over all 38 stores from
-`~/.config/pai/stores.yaml` (on a brain remote client: the host's
+`~/.config/trillium-stores/stores.yaml` (on a brain remote client: the host's
 `brain stores list --json`; bubbletea, alt-screen):
 
 - Type any letters to filter (name + description); first match highlights.
