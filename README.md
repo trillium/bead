@@ -21,6 +21,8 @@ bead <store> "Short title"      entry form with the title prefilled
 bead "Short title"              pick a store with the title prefilled
 echo "body" | bead <store> "T"  non-interactive: title + piped body
 bead pi ["thought..."]          bead-scoped pi session: paste, scope down, create, exit
+bead decide [store]             answer the decisions waiting on you, one at a time
+bead decide --list [store]      plain list of those decisions
 bead -n|--dry-run <store> …     preview; create nothing
 bead --list                     list known stores and exit
 bead -h|--help                  help
@@ -88,6 +90,41 @@ initial prompt; `bead -n pi [...]` dry-runs via `pi -p` (plans, no writes).
   Available: pi built-ins `dark` / `light`, plus any
   `~/.pi/agent/themes/*.json` by file name (e.g. `rose-pine-moon`).
   A missing theme falls back to pi's dark default.
+
+## `bead decide` — answer the decisions waiting on you
+
+`bead decide [store]` works through the open items labelled `captain-decision`
+— in one store, or in every brain store on PATH when none is given — and saves
+each answer as a comment on the item. It is the entry form's counterpart for
+reading: the same keys and look, aimed at `task show` / `task comments add`.
+
+- **List**: highest priority first (P0 on top), newest first within a priority.
+  `↑↓` move, `⏎` opens an item, `esc` quits. Items already marked
+  `decision-answered` are left out (`--all` shows them with a ✓).
+- **Item**: the full text — title, description (its headings picked out),
+  links, and the existing comments — in a scrollable pane (`pgup/pgdn` or
+  `alt+↑/↓`). Below it, the same field cycle as the entry form: `tab`/`↑↓`
+  between **Pick**, **Answer**, **After saving** and **Save answer**.
+- **Pick**: shown when the item lists options under an `OPTIONS` heading
+  (bullets, `A)` letters or `1.` numbers; `(recommended)` gets a ★). Press an
+  option's number or letter, or `←/→` then `⏎`, to fill the answer with it; add
+  a note on top if you like. Items without options just take typed text.
+- **Answer**: required. Saved as `Answer (captain, <date>): …`, so firstmate can
+  find it in the thread. The text goes to the store on stdin
+  (`comments add <id> -f /dev/stdin`), so it works through remote store
+  wrappers too.
+- **After saving** (`←/→`): `mark answered` (default: adds the
+  `decision-answered` label so the item leaves your queue while staying open for
+  firstmate to act on and close), `comment only`, or `close the item` — closing
+  only ever happens if you pick it, and never without an answer.
+- `ctrl+s` (or `⏎` on Save) saves and moves on to the next unanswered item;
+  `ctrl+n` / `ctrl+p` skip without answering; `esc` goes back to the list.
+- `bead decide --list [store]` prints the same queue plainly (also what you
+  get when stdout isn't a terminal).
+- `-n` / `--dry-run` walks the same screens but runs no writes, printing the
+  commands it would have run when you leave.
+
+A store that can't be read is a warning, not a failure.
 
 ## Themes
 
