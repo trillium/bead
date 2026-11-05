@@ -2,7 +2,7 @@
 //
 // Bare `bead` opens a store picker, then an in-app entry form; `<store>
 // create` receives the long content via --body-file, never over the
-// command line.
+// command line. `bead decide` answers the items waiting on the captain.
 package main
 
 import (
@@ -55,6 +55,11 @@ func run(argv []string) int {
 	// bead pi: jump into a bead-scoped pi session (before store routing).
 	if len(positionals) > 0 && positionals[0] == "pi" {
 		return runBeadPi(positionals[1:], dryRun)
+	}
+
+	// bead decide: answer the captain-decision items (before store routing).
+	if len(positionals) > 0 && positionals[0] == "decide" {
+		return runDecide(positionals[1:], dryRun)
 	}
 
 	storeName := ""
@@ -171,6 +176,8 @@ Usage:
   bead "Short title"              pick a store with the title prefilled
   bead pi ["thought..."]          bead-scoped pi session: paste, scope down, create, exit
   bead pi --narrow|--theme <n> …  stripped-down session / tinted theme (bead pi --help)
+  bead decide [store]             answer the decisions waiting on you (bead decide --help)
+  bead decide --list [store]      plain list of those decisions
   echo "body" | bead <store> "T"  non-interactive: title + piped body
   bead -n|--dry-run <store> …     preview; create nothing
   bead --list                     list known stores and exit
@@ -181,8 +188,14 @@ Entry form keys:
              ⏎ on Save creates the bead
   ctrl+s    create the bead                     esc backs out / quits
 
+Decision keys (bead decide):
+  ⏎ opens an item; press an option's number/letter to quick-pick, type or edit
+  the answer, ctrl+s saves it as a comment and moves to the next item.
+  ctrl+n/p skip · esc back · it never closes an item unless you choose to.
+
 Flags (any position):
-  -n, --dry-run   forward --dry-run to the store's create (previews, no write).
+  -n, --dry-run   forward --dry-run to the store's create (previews, no write);
+                  with decide, run no writes and print what would run.
 
 Long content goes through --body-file - (the description on stdin, which
 also reaches a brain host through remote store wrappers), never over the
